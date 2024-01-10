@@ -203,18 +203,31 @@ if __name__ == "__main__":
     empty_path = os.path.join(parent_path, "empty")
     deleted_path = os.path.join(parent_path, "deleted")
     
-    user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
-    if user_permission.lower() == 'y' or user_permission.lower() == 'yes':
-        pass
-    else:
-        exit()
+    user_permitted = False
     
     
     if not os.path.exists(valid_path):
+        user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
+        if user_permission.lower() == 'y' or user_permission.lower() == 'yes':
+            user_permitted = True
+        else:
+            exit()
         os.makedirs(valid_path)
     if not os.path.exists(empty_path):
+        if not user_permitted:
+            user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
+            if user_permission.lower() == 'y' or user_permission.lower() == 'yes':
+                user_permitted = True
+            else:
+                exit()
         os.makedirs(empty_path)
     if not os.path.exists(deleted_path):
+        if not user_permitted:
+            user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
+            if user_permission.lower() == 'y' or user_permission.lower() == 'yes':
+                user_permitted = True
+            else:
+                exit()
         os.makedirs(deleted_path)
 
     if not os.path.exists(os.path.join(labels, "classes.txt")):
