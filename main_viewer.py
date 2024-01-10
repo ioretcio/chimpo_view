@@ -5,7 +5,6 @@ import cv2
 import hashlib
 import shutil
 from pathlib import Path
-import re
 
 window_description = 'press w-if image contains tech, a-if image does not contains tech, d-if image broken,\
     z-to undo (but they return in next session), x-to EXIT, arrowKeys - NAVIGATE'
@@ -54,6 +53,7 @@ def read_label_file(label_path):
 
 def generateColorByText(text):
     s = str(text)
+    print(f"genering >{s}<")
     hashCode = int(hashlib.sha256(s.encode('utf-8')).hexdigest(), 16)
     r = int((hashCode / 255) % 255)
     g = int((hashCode / 65025) % 255)
@@ -96,14 +96,21 @@ def draw_boxes(labels_array, image, classes):
         b = rotate_point((centerX, centerY), b, angle)
         c = rotate_point((centerX, centerY), c, angle)
         d = rotate_point((centerX, centerY), d, angle)
-        cv2.line(image, (int(a[0]), int(a[1])), (int(b[0]), int(
+        
+        alpha = 0.50
+        overlay = image.copy()
+        
+        
+        cv2.line(overlay, (int(a[0]), int(a[1])), (int(b[0]), int(
             b[1])), generateColorByText(getClass(label[0], classes)), 2)
-        cv2.line(image, (int(b[0]), int(b[1])), (int(c[0]), int(
+        cv2.line(overlay, (int(b[0]), int(b[1])), (int(c[0]), int(
             c[1])), generateColorByText(getClass(label[0], classes)), 2)
-        cv2.line(image, (int(c[0]), int(c[1])), (int(d[0]), int(
+        cv2.line(overlay, (int(c[0]), int(c[1])), (int(d[0]), int(
             d[1])), generateColorByText(getClass(label[0], classes)), 2)
-        cv2.line(image, (int(a[0]), int(a[1])), (int(d[0]), int(
+        cv2.line(overlay, (int(a[0]), int(a[1])), (int(d[0]), int(
             d[1])), generateColorByText(getClass(label[0], classes)), 2)
+        
+        return cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
 
 
 def latinize_all(image_folder, label_folder):
@@ -121,7 +128,7 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
     latinize_all(image_folder, label_folder)
     image_files = [file for file in os.listdir(image_folder) if file.endswith(('.jpg', '.jpeg', '.png', '.gif'))]
     last = []
-    cv2.namedWindow(window_description)
+    cv2.namedWindow(window_description, cv2.WINDOW_NORMAL) 
     file_index = 0
     while True:
         file = image_files[file_index]
@@ -132,7 +139,7 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
             if not words:
                 continue
             img = cv2.imread(os.path.join(image_folder, file))
-            draw_boxes(words, img, classes)
+            img = draw_boxes(words, img, classes)
             try:
                 cv2.imshow(window_description, img)
             except Exception as E:
