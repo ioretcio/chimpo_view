@@ -6,10 +6,24 @@ import hashlib
 import shutil
 from pathlib import Path
 
-window_description = 'press w-if image contains tech, a-if image does not contains tech, d-if image broken,\
+window_description = 'press w-if image contains target objects, a-if image does not contains target objects, d-if image broken,\
     z-to undo (but they return in next session), x-to EXIT, arrowKeys - NAVIGATE'
 
 parser = argparse.ArgumentParser()
+
+
+
+global _Total
+global _Left
+global _Empty
+global _Delete
+global _Valid
+_Total = 0
+_Left = 0
+_Empty = 0
+_Delete = 0
+_Valid = 0
+
 
 
 def translit(text):
@@ -53,7 +67,6 @@ def read_label_file(label_path):
 
 def generateColorByText(text):
     s = str(text)
-    print(f"genering >{s}<")
     hashCode = int(hashlib.sha256(s.encode('utf-8')).hexdigest(), 16)
     r = int((hashCode / 255) % 255)
     g = int((hashCode / 65025) % 255)
@@ -64,6 +77,10 @@ def generateColorByText(text):
 def getClass(key, classes):
     key = int(key)
 
+    if not classes:
+        return key
+    
+    
     if key in classes.keys():
         return classes[key]
     else:
@@ -79,7 +96,7 @@ def rotate_point(origin, point, angle):
     return qx, qy
 
 
-def draw_boxes(labels_array, image, classes):
+def draw_boxes(labels_array, image, classes, file):
     for label in labels_array:
         if label[0] == 'YOLO_OBB':
             continue
@@ -98,6 +115,21 @@ def draw_boxes(labels_array, image, classes):
         d = rotate_point((centerX, centerY), d, angle)
         
         alpha = 0.50
+        
+        
+        global _Total
+        global _Left
+        global _Empty
+        global _Delete
+        global _Valid
+        text = f"Total={_Total}\nLeft={_Left}\nValid={_Valid}\nEmpty={_Empty}\nDelete={_Delete}"
+        y0, dy = 40, 25
+        cv2.putText(image, f"File: {file}", (2, 15 ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        for i, line in enumerate(text.split('\n')):
+            y = y0 + i*dy
+            cv2.putText(image, line, (2, y ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        
+        
         overlay = image.copy()
         
         
@@ -109,6 +141,9 @@ def draw_boxes(labels_array, image, classes):
             d[1])), generateColorByText(getClass(label[0], classes)), 2)
         cv2.line(overlay, (int(a[0]), int(a[1])), (int(d[0]), int(
             d[1])), generateColorByText(getClass(label[0], classes)), 2)
+        
+        
+        
         
         return cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
 
@@ -127,6 +162,14 @@ def latinize_all(image_folder, label_folder):
 def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path, deleted_path):
     latinize_all(image_folder, label_folder)
     image_files = [file for file in os.listdir(image_folder) if file.endswith(('.jpg', '.jpeg', '.png', '.gif'))]
+    global _Total
+    global _Left
+    global _Empty
+    global _Delete
+    global _Valid
+    
+    _Total = len(image_files)
+    _Left = len(image_files)
     last = []
     cv2.namedWindow(window_description, cv2.WINDOW_NORMAL) 
     file_index = 0
@@ -139,7 +182,7 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
             if not words:
                 continue
             img = cv2.imread(os.path.join(image_folder, file))
-            img = draw_boxes(words, img, classes)
+            img = draw_boxes(words, img, classes,file)
             try:
                 cv2.imshow(window_description, img)
             except Exception as E:
@@ -150,39 +193,42 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
             k = cv2.waitKeyEx(0)
             if k == 120 or k == 247:
                 exit()  # x button
-            elif k == 97 or k == 244:
+            elif k == 97 or k == 244:#a
                 last.append([os.path.join(image_folder, file),
                             os.path.join(empty_path, file)])
-                # a button
+                _Left -=1
+                _Empty +=1
                 print(
-                    f"Image does not contain tech {shutil.move(os.path.join(image_folder,file),os.path.join(empty_path,file))}")
+                    f"Image does not contain target objects {shutil.move(os.path.join(image_folder,file),os.path.join(empty_path,file))}")
                 image_files.remove(file)
                 file_index = min(file_index+1, len(image_files)-1)
-            elif k == 119 or k == 246:
+            elif k == 119 or k == 246:#w
                 last.append([os.path.join(image_folder, file),
                             os.path.join(valid_path, file)])
-                # w button
                 print(
-                    f"Image contains tech {shutil.move(os.path.join(image_folder,file),os.path.join(valid_path,file))}")
+                    f"Image contains target objects {shutil.move(os.path.join(image_folder,file),os.path.join(valid_path,file))}")
+                _Left-=1
+                _Valid+=1
                 image_files.remove(file)
                 file_index = min(file_index+1, len(image_files)-1)
-            elif k == 100 or k == 226:
+            elif k == 100 or k == 226:#d
                 last.append([os.path.join(image_folder, file),
                             os.path.join(deleted_path, file)])
-                # d button
                 print(
-                    f"Broken image {shutil.move(os.path.join(image_folder,file), os.path.join(deleted_path,file))}")
+                    f"Broken image {shutil.move(os.path.join(image_folder,file),os.path.join(deleted_path,file))}")
+                _Left-=1
+                _Delete+=1
                 image_files.remove(file)
                 file_index = min(file_index+1, len(image_files)-1)
-            elif k == 122 or k == 255:
+            elif k == 122 or k == 255:#z
                 if (len(last) > 0):
                     print(f"Undo {shutil.move(last[-1][1], last[-1][0])}")
                     last.remove(last[-1])  # z button
+                    _Left+=1
                 file_index = min(file_index+1, len(image_files)-1)
-            elif k == 2555904:
+            elif k == 2555904:#>
                 file_index = min(file_index+1, len(image_files)-1)
-            elif k == 2424832:
-                print("prev")
+            elif k == 2424832:#<
                 file_index = max(0, file_index-1)
             elif k == -1:
                 break
@@ -208,7 +254,7 @@ if __name__ == "__main__":
     
     if not os.path.exists(valid_path):
         user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
-        if user_permission.lower() == 'y' or user_permission.lower() == 'yes':
+        if user_permission.lower() in ['y', 'yes']:
             user_permitted = True
         else:
             exit()
@@ -216,7 +262,7 @@ if __name__ == "__main__":
     if not os.path.exists(empty_path):
         if not user_permitted:
             user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
-            if user_permission.lower() == 'y' or user_permission.lower() == 'yes':
+            if user_permission.lower() in ['y', 'yes']:
                 user_permitted = True
             else:
                 exit()
@@ -224,7 +270,7 @@ if __name__ == "__main__":
     if not os.path.exists(deleted_path):
         if not user_permitted:
             user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
-            if user_permission.lower() == 'y' or user_permission.lower() == 'yes':
+            if user_permission.lower() in ['y', 'yes']:
                 user_permitted = True
             else:
                 exit()
@@ -232,16 +278,20 @@ if __name__ == "__main__":
 
     if not os.path.exists(os.path.join(labels, "classes.txt")):
         print("> No classes.txt file, i will use numbers.")
+        classes = None
     else:
         print("> classes.txt file found, i will use it.")
-    classes = {}
-    with open(os.path.join(labels, "classes.txt"), 'r') as f:
-        lines = f.readlines()
-        for index in range(len(lines)):
-            classes[index] = lines[index].strip()
-    print("> Classes:")
-    for index, label in classes.items():
-        print(f"    {index}: {label}")
+        with open(os.path.join(labels, "classes.txt"), 'r') as f:
+            classes = {}
+            lines = f.readlines()
+            for index in range(len(lines)):
+                classes[index] = lines[index].strip()
+        print("> Classes:")
+        for index, label in classes.items():
+            print(f"    {index}: {label}")
+    
+    
+    
     print("starting...")
     iterative_viewer(images, labels, classes, valid_path,
                     empty_path, deleted_path)
