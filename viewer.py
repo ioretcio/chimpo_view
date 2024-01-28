@@ -161,7 +161,7 @@ def latinize_all(image_folder, label_folder):
 
 def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path, deleted_path):
     latinize_all(image_folder, label_folder)
-    image_files = [file for file in os.listdir(image_folder) if file.endswith(('.jpg', '.jpeg', '.png', '.gif'))]
+    image_files = sorted([file for file in os.listdir(image_folder) if file.endswith(('.jpg', '.jpeg', '.png', '.gif'))])
     global _Total
     global _Left
     global _Empty
@@ -175,6 +175,7 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
     file_index = 0
     while True:
         file = image_files[file_index]
+        print(file_index)
         possible_label_file = os.path.join(
             label_folder,  os.path.splitext(file)[0] + ".txt")
         if os.path.exists(possible_label_file):
@@ -198,34 +199,27 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
                             os.path.join(empty_path, file)])
                 _Left -=1
                 _Empty +=1
-                print(
-                    f"Image does not contain target objects {shutil.move(os.path.join(image_folder,file),os.path.join(empty_path,file))}")
+                shutil.move(os.path.join(image_folder,file),os.path.join(empty_path,file))
                 image_files.remove(file)
-                file_index = min(file_index+1, len(image_files)-1)
             elif k == 119 or k == 246:#w
                 last.append([os.path.join(image_folder, file),
                             os.path.join(valid_path, file)])
-                print(
-                    f"Image contains target objects {shutil.move(os.path.join(image_folder,file),os.path.join(valid_path,file))}")
+                shutil.move(os.path.join(image_folder,file),os.path.join(valid_path,file))
                 _Left-=1
                 _Valid+=1
                 image_files.remove(file)
-                file_index = min(file_index+1, len(image_files)-1)
             elif k == 100 or k == 226:#d
                 last.append([os.path.join(image_folder, file),
                             os.path.join(deleted_path, file)])
-                print(
-                    f"Broken image {shutil.move(os.path.join(image_folder,file),os.path.join(deleted_path,file))}")
+                shutil.move(os.path.join(image_folder,file),os.path.join(deleted_path,file))
                 _Left-=1
                 _Delete+=1
                 image_files.remove(file)
-                file_index = min(file_index+1, len(image_files)-1)
             elif k == 122 or k == 255:#z
                 if (len(last) > 0):
-                    print(f"Undo {shutil.move(last[-1][1], last[-1][0])}")
+                    shutil.move(last[-1][1], last[-1][0])
                     last.remove(last[-1])  # z button
                     _Left+=1
-                file_index = min(file_index+1, len(image_files)-1)
             elif k == 2555904:#>
                 file_index = min(file_index+1, len(image_files)-1)
             elif k == 2424832:#<
@@ -234,6 +228,19 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
                 break
             else:
                 print(f"Unhandled {k} key")
+
+
+def process_classes_file(path):
+    with open(path, 'r') as f:
+        classes = {}
+        lines = f.readlines()
+        for index in range(len(lines)):
+            classes[index] = lines[index].strip()
+        print("> Classes:")
+        for index, label in classes.items():
+            print(f"    {index}: {label}")
+        return classes
+
 
 
 if __name__ == "__main__":
@@ -277,19 +284,16 @@ if __name__ == "__main__":
         os.makedirs(deleted_path)
 
     if not os.path.exists(os.path.join(labels, "classes.txt")):
-        print("> No classes.txt file, i will use numbers.")
-        classes = None
+        print("> No classes.txt file, i searching for predefined.txt in app folder...")
+        predefined_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "predefined.txt")
+        if os.path.exists(predefined_path):
+            print("> predefined.txt file found, i will use it.")
+            classes = process_classes_file(predefined_path)
+        else:
+            classes = None
     else:
         print("> classes.txt file found, i will use it.")
-        with open(os.path.join(labels, "classes.txt"), 'r') as f:
-            classes = {}
-            lines = f.readlines()
-            for index in range(len(lines)):
-                classes[index] = lines[index].strip()
-        print("> Classes:")
-        for index, label in classes.items():
-            print(f"    {index}: {label}")
-    
+        classes = process_classes_file(os.path.join(labels, "classes.txt"))
     
     
     print("starting...")
