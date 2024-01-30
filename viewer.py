@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser()
 
 
 
+
 global _Total
 global _Left
 global _Empty
@@ -127,7 +128,9 @@ def draw_boxes(labels_array, image, classes, file):
         cv2.putText(image, f"File: {file}", (2, 15 ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
         for i, line in enumerate(text.split('\n')):
             y = y0 + i*dy
-            cv2.putText(image, line, (2, y ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            cv2.putText(image, line, (2+1, y+1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+            cv2.putText(image, line, (2-1, y-1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            cv2.putText(image, line, (2, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
         
         
         overlay = image.copy()
@@ -182,6 +185,9 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
             if not words:
                 continue
             img = cv2.imread(os.path.join(image_folder, file))
+            if img is None:
+                image_files.remove(file)
+                continue
             img = draw_boxes(words, img, classes,file)
             try:
                 cv2.imshow(window_description, img)
@@ -298,3 +304,5 @@ if __name__ == "__main__":
     print("starting...")
     iterative_viewer(images, labels, classes, valid_path,
                     empty_path, deleted_path)
+
+
