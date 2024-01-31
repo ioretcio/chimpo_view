@@ -177,6 +177,9 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
     cv2.namedWindow(window_description, cv2.WINDOW_NORMAL) 
     file_index = 0
     while True:
+        file_index = min(len(image_files)-1, file_index)
+        if len(image_files)==0: break
+        
         file = image_files[file_index]
         possible_label_file = os.path.join(
             label_folder,  os.path.splitext(file)[0] + ".txt")
