@@ -6,7 +6,7 @@ import hashlib
 import shutil
 from pathlib import Path
 
-window_description = 'press w-if image contains target objects, a-if image does not contains target objects, d-if image broken,\
+window_description = 'press w-if image contains target objects, a-if image does not contains target objects, d-if image broken (out of context),\
     z-to UNDO, x-to EXIT, arrowKeys - NAVIGATE'
 
 parser = argparse.ArgumentParser()
@@ -353,5 +353,3 @@ if __name__ == "__main__":
     print("starting...")
     iterative_viewer(images, labels, classes, valid_path,
                     empty_path, deleted_path)
-
-
