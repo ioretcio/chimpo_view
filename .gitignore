@@ -1,2 +1,3 @@
 /.vs
-prededined.txt
+/predefined.txt
+*.txt
