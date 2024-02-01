@@ -1,4 +1,4 @@
-A simple program for viewing (validating) obb datasets and sorting them according to the quality of triggers into three folders: 
+### A simple program for VIEWING (VALIDATING) obb datasets and SORTING them according to the quality of triggers into three folders: 
 
 - Adequate triggers
 - False triggers
@@ -6,7 +6,9 @@ A simple program for viewing (validating) obb datasets and sorting them accordin
 
 ![Image1](resources/1.jpg)
 
-neet to be installed python-opencv
+> [!WARNING]
+> Need to be installed python-opencv
+
 
 
 
