@@ -173,7 +173,7 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
     
     _Total = len(image_files)
     _Left = len(image_files)
-    last = []
+    actions_queue = []
     cv2.namedWindow(window_description, cv2.WINDOW_NORMAL) 
     file_index = 0
     while True:
@@ -192,50 +192,53 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
                 image_files.remove(file)
                 continue
             img = draw_boxes(words, img, classes,file)
-            try:
-                cv2.imshow(window_description, img)
-            except Exception as E:
-                for char in file:
-                    print(char, ord(char))
-            if cv2.getWindowProperty(window_description, cv2.WND_PROP_VISIBLE) <1:
-                break
-            k = cv2.waitKeyEx(0)
-            if k == 120 or k == 247:
-                exit()  # x button
-            elif k == 97 or k == 244:#a
-                last.append([os.path.join(image_folder, file),
-                            os.path.join(empty_path, file)])
-                _Left -=1
-                _Empty +=1
-                shutil.move(os.path.join(image_folder,file),os.path.join(empty_path,file))
-                image_files.remove(file)
-            elif k == 119 or k == 246:#w
-                last.append([os.path.join(image_folder, file),
-                            os.path.join(valid_path, file)])
-                shutil.move(os.path.join(image_folder,file),os.path.join(valid_path,file))
-                _Left-=1
-                _Valid+=1
-                image_files.remove(file)
-            elif k == 100 or k == 226:#d
-                last.append([os.path.join(image_folder, file),
-                            os.path.join(deleted_path, file)])
-                shutil.move(os.path.join(image_folder,file),os.path.join(deleted_path,file))
-                _Left-=1
-                _Delete+=1
-                image_files.remove(file)
-            elif k == 122 or k == 255:#z
-                if (len(last) > 0):
-                    shutil.move(last[-1][1], last[-1][0])
-                    last.remove(last[-1])  # z button
-                    _Left+=1
-            elif k == 2555904:#>
-                file_index = min(file_index+1, len(image_files)-1)
-            elif k == 2424832:#<
+        try:
+            cv2.imshow(window_description, img)
+        except Exception as E:
+            for char in file:
+                print(char, ord(char))
+        if cv2.getWindowProperty(window_description, cv2.WND_PROP_VISIBLE) <1:
+            break
+        k = cv2.waitKeyEx(0)
+        if k == 120 or k == 247:
+            exit()  # x button
+        elif k == 97 or k == 244:#a
+            actions_queue.append([os.path.join(image_folder, file),
+                        os.path.join(empty_path, file)])
+            _Left -=1
+            _Empty +=1
+            shutil.move(os.path.join(image_folder,file),os.path.join(empty_path,file))
+            image_files.remove(file)
+        elif k == 119 or k == 246:#w
+            actions_queue.append([os.path.join(image_folder, file),
+                        os.path.join(valid_path, file)])
+            shutil.move(os.path.join(image_folder,file),os.path.join(valid_path,file))
+            _Left-=1
+            _Valid+=1
+            image_files.remove(file)
+        elif k == 100 or k == 226:#d
+            actions_queue.append([os.path.join(image_folder, file),
+                        os.path.join(deleted_path, file)])
+            shutil.move(os.path.join(image_folder,file),os.path.join(deleted_path,file))
+            _Left-=1
+            _Delete+=1
+            image_files.remove(file)
+        elif k == 122 or k == 255:#z
+            if (len(actions_queue) > 0):
+                shutil.move(actions_queue[-1][1], actions_queue[-1][0])
+                file_name = os.path.basename(actions_queue[-1][0])
+                image_files.insert(0, file_name)
                 file_index = max(0, file_index-1)
-            elif k == -1:
-                break
-            else:
-                print(f"Unhandled {k} key")
+                actions_queue.remove(actions_queue[-1])  # z button
+                _Left+=1
+        elif k == 2555904:#>
+            file_index = min(file_index+1, len(image_files)-1)
+        elif k == 2424832:#<
+            file_index = max(0, file_index-1)
+        elif k == -1:
+            break
+        else:
+            print(f"Unhandled {k} key")
 
 
 def process_classes_file(path):
