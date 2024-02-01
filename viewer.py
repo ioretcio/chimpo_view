@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 
 window_description = 'press w-if image contains target objects, a-if image does not contains target objects, d-if image broken,\
-    z-to undo (but they return in next session), x-to EXIT, arrowKeys - NAVIGATE'
+    z-to UNDO, x-to EXIT, arrowKeys - NAVIGATE'
 
 parser = argparse.ArgumentParser()
 
