@@ -8,8 +8,10 @@ from pathlib import Path
 
 window_description = 'press w-if image contains target objects, a-if image does not contains target objects, d-if image broken (out of context),\
     z-to UNDO, x-to EXIT, arrowKeys - NAVIGATE'
+cv2.namedWindow(window_description, cv2.WINDOW_NORMAL) 
 
-parser = argparse.ArgumentParser()
+
+
 text = """
                 ......:::......                                       ..
               ...-=+======+++=:....                                     
@@ -205,6 +207,10 @@ def latinize_all(image_folder, label_folder):
 
 
 def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path, deleted_path):
+    
+    
+    
+    
     latinize_all(image_folder, label_folder)
     image_files = sorted([file for file in os.listdir(image_folder) if file.endswith(('.jpg', '.jpeg', '.png', '.gif'))])
     global _Total
@@ -216,7 +222,7 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
     _Total = len(image_files)
     _Left = len(image_files)
     actions_queue = []
-    cv2.namedWindow(window_description, cv2.WINDOW_NORMAL) 
+    
     file_index = 0
     while True:
         file_index = min(len(image_files)-1, file_index)
@@ -258,13 +264,23 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
             _Left-=1
             _Valid+=1
             image_files.remove(file)
-        elif k == 100 or k == 226:#d
+        elif k == 101 or k == 243:#e
+            actions_queue.append([os.path.join(image_folder, file),
+                        os.path.join(alt_valid_path, file)])
+            shutil.move(os.path.join(image_folder,file),os.path.join(alt_valid_path,file))
+            _Left-=1
+            _Valid+=1
+            image_files.remove(file)
+        
+        elif k == 100 or k == 226:#d 
             actions_queue.append([os.path.join(image_folder, file),
                         os.path.join(deleted_path, file)])
             shutil.move(os.path.join(image_folder,file),os.path.join(deleted_path,file))
             _Left-=1
             _Delete+=1
             image_files.remove(file)
+            
+            
         elif k == 122 or k == 255:#z
             if (len(actions_queue) > 0):
                 shutil.move(actions_queue[-1][1], actions_queue[-1][0])
@@ -298,15 +314,20 @@ def process_classes_file(path):
 
 
 if __name__ == "__main__":
-
-    parser.add_argument('label_folder', help='Folder containing label files')
-    parser.add_argument('image_folder', help='Folder containing image files')
-    labels = parser.parse_args().label_folder
-    images = parser.parse_args().image_folder
+    
+    parser = argparse.ArgumentParser(
+        description='Suppa chimpa view.')
+    parser.add_argument('--label_folder','-l', help='Folder containing label files')
+    parser.add_argument('--image_folder','-i', help='Folder containing image files')
+    
+    args = parser.parse_args()
+    labels = args.label_folder
+    images = args.image_folder
 
     path = Path(os.path.abspath(images))
     parent_path = path.parent.absolute()
     valid_path = os.path.join(parent_path, "valid")
+    alt_valid_path = os.path.join(parent_path, "alt_valid")
     empty_path = os.path.join(parent_path, "empty")
     deleted_path = os.path.join(parent_path, "deleted")
     
@@ -314,7 +335,7 @@ if __name__ == "__main__":
     
     
     if not os.path.exists(valid_path):
-        user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
+        user_permission = input("Allow to create 4 new folders (for valid, alt_valid, empty and deleted images) (Y/N)?")
         if user_permission.lower() in ['y', 'yes']:
             user_permitted = True
         else:
@@ -322,15 +343,23 @@ if __name__ == "__main__":
         os.makedirs(valid_path)
     if not os.path.exists(empty_path):
         if not user_permitted:
-            user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
+            user_permission = input("Allow to create 4 new folders (for valid, alt_valid, empty and deleted images) (Y/N)?")
             if user_permission.lower() in ['y', 'yes']:
                 user_permitted = True
             else:
                 exit()
         os.makedirs(empty_path)
+    if not os.path.exists(alt_valid_path):
+        if not user_permitted:
+            user_permission = input("Allow to create 4 new folders (for valid, alt_valid, empty and deleted images) (Y/N)?")
+            if user_permission.lower() in ['y', 'yes']:
+                user_permitted = True
+            else:
+                exit()
+        os.makedirs(alt_valid_path)
     if not os.path.exists(deleted_path):
         if not user_permitted:
-            user_permission = input("Allow to create 3 new folders (for valid, empty and deleted images) (Y/N)?")
+            user_permission = input("Allow to create 4 new folders (for valid, alt_valid, empty and deleted images) (Y/N)?")
             if user_permission.lower() in ['y', 'yes']:
                 user_permitted = True
             else:
@@ -350,6 +379,16 @@ if __name__ == "__main__":
         classes = process_classes_file(os.path.join(labels, "classes.txt"))
     
     
+    
+    
+    
+    
     print("starting...")
+    
+    
+    tutorpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources\\tutor.png")
+    cv2.imshow(window_description, cv2.imread(tutorpath))
+    cv2.waitKey(0)
+    
     iterative_viewer(images, labels, classes, valid_path,
                     empty_path, deleted_path)

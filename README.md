@@ -9,6 +9,6 @@
 > [!WARNING]
 > Need to be installed python-opencv
 
+## Info (displays on every start): 
 
-
-
+![Image1](resources/tutor.png)
