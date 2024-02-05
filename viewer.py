@@ -142,6 +142,7 @@ def rotate_point(origin, point, angle):
 
 
 def draw_boxes(labels_array, image, classes, file):
+    print(labels_array)
     for label in labels_array:
         if label[0] == 'YOLO_OBB':
             continue
@@ -189,10 +190,10 @@ def draw_boxes(labels_array, image, classes, file):
         cv2.line(overlay, (int(a[0]), int(a[1])), (int(d[0]), int(
             d[1])), generateColorByText(getClass(label[0], classes)), 2)
         
+        image = cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
         
         
-        
-        return cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
+    return cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
 
 
 def latinize_all(image_folder, label_folder):
