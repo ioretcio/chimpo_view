@@ -142,7 +142,6 @@ def rotate_point(origin, point, angle):
 
 
 def draw_boxes(labels_array, image, classes, file):
-    print(labels_array)
     for label in labels_array:
         if label[0] == 'YOLO_OBB':
             continue
@@ -304,7 +303,6 @@ def process_classes_file(path):
     with open(path, 'r') as f:
         classes = {}
         lines = f.readlines()
-        print(lines)
         for index in range(len(lines)):
             classes[index] = lines[index].strip()
         print("> Classes:")
