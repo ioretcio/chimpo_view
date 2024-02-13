@@ -248,23 +248,23 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
         if cv2.getWindowProperty(window_description, cv2.WND_PROP_VISIBLE) <1:
             break
         k = cv2.waitKeyEx(0)
-        if k == 120 or k == 247:
+        if k == 120 or k == 247 or k == 88:
             exit()  # x button
-        elif k == 97 or k == 244:#a
+        elif k == 97 or k == 244 or k == 65:#a
             actions_queue.append([os.path.join(image_folder, file),
                         os.path.join(empty_path, file)])
             _Left -=1
             _Empty +=1
             shutil.move(os.path.join(image_folder,file),os.path.join(empty_path,file))
             image_files.remove(file)
-        elif k == 119 or k == 246:#w
+        elif k == 119 or k == 246 or k == 87:#w
             actions_queue.append([os.path.join(image_folder, file),
                         os.path.join(valid_path, file)])
             shutil.move(os.path.join(image_folder,file),os.path.join(valid_path,file))
             _Left-=1
             _Valid+=1
             image_files.remove(file)
-        elif k == 101 or k == 243:#e
+        elif k == 101 or k == 243 or k == 69:#e
             actions_queue.append([os.path.join(image_folder, file),
                         os.path.join(alt_valid_path, file)])
             shutil.move(os.path.join(image_folder,file),os.path.join(alt_valid_path,file))
@@ -272,7 +272,7 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
             _Valid+=1
             image_files.remove(file)
         
-        elif k == 100 or k == 226:#d 
+        elif k == 100 or k == 226 or k == 68:#d 
             actions_queue.append([os.path.join(image_folder, file),
                         os.path.join(deleted_path, file)])
             shutil.move(os.path.join(image_folder,file),os.path.join(deleted_path,file))
@@ -281,7 +281,7 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
             image_files.remove(file)
             
             
-        elif k == 122 or k == 255:#z
+        elif k == 122 or k == 255 or k == 89:#z
             if (len(actions_queue) > 0):
                 shutil.move(actions_queue[-1][1], actions_queue[-1][0])
                 file_name = os.path.basename(actions_queue[-1][0])
