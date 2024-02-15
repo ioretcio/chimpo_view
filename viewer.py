@@ -86,15 +86,24 @@ def translit(text):
         'М': 'M',        'Н': 'N',        'О': 'O',        'П': 'P',        'Р': 'R',
         'С': 'S',        'Т': 'T',        'У': 'U',        'Ф': 'F',        'Х': 'Kh',
         'Ц': 'Ts',        'Ч': 'Ch',        'Ш': 'Sh',        'Щ': 'Shch',        'Ь': '_',
-        'Ъ': '_',        'Ю': 'Iu',        'Я': 'Ia', 'Ñ':'N'
+        'Ъ': '_',        'Ю': 'Iu',        'Я': 'Ia', 'Ñ':'N' , ' ':'_', '«':'_', '»':'_',
+        '"':'_'
     }
-
     for key in cyrillic_to_latin.keys():
         text = text.replace(key, cyrillic_to_latin[key])
+    to_remove = ['\u0096', '\u0094', '\u0306', '\x80', '\x81', '\x8f', '\u044b', '\uff5c'] #it will grow...
+    translation_table = str.maketrans("", "", "".join(to_remove))
+    text = text.translate(translation_table)
     
-    text = text.replace('\u0096', '')
-    text = text.replace('\u0094', '')
 
+    whitelist = [chr(i) for i in range(65, 91)] + [chr(i) for i in range(97, 123)] + [chr(i) for i in range(32, 48)]
+    whitelist += ([chr(i) for i in range(58, 65)] + [chr(i) for i in range(91, 97)] + [chr(i) for i in range(123, 127)])
+    whitelist += [chr(i) for i in range(48, 58)]  # Adding digits to the whitelist
+    text = ''.join([char if char in whitelist else '_' for char in text])
+    
+    
+    
+    
     return text
 
 
@@ -195,23 +204,19 @@ def draw_boxes(labels_array, image, classes, file):
     return cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
 
 
-def latinize_all(image_folder, label_folder):
-    for image in os.listdir(image_folder):
+def latinize_all(folder):
+    for image in os.listdir(folder):
         if(image != translit(image)):
-            shutil.move(os.path.join(image_folder, image),
-                        os.path.join(image_folder, translit(image)))
-    for label in os.listdir(label_folder):
-        if(label != translit(label)):
-            shutil.move(os.path.join(label_folder, label),
-                        os.path.join(label_folder, translit(label)))
-
+            shutil.move(os.path.join(folder, image),
+                        os.path.join(folder, translit(image)))
+ 
 
 def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path, deleted_path):
     
     
-    
-    
-    latinize_all(image_folder, label_folder)
+    latinize_all(image_folder)
+    if(label_folder):
+        latinize_all(label_folder)
     image_files = sorted([file for file in os.listdir(image_folder) if file.endswith(('.jpg', '.jpeg', '.png', '.gif'))])
     global _Total
     global _Left
@@ -229,20 +234,26 @@ def iterative_viewer(image_folder, label_folder, classes, valid_path, empty_path
         if len(image_files)==0: break
         
         file = image_files[file_index]
-        possible_label_file = os.path.join(
-            label_folder,  os.path.splitext(file)[0] + ".txt")
-        if os.path.exists(possible_label_file):
-            words = read_label_file(possible_label_file)
-            if not words:
-                continue
-            img = cv2.imread(os.path.join(image_folder, file))
-            if img is None:
-                image_files.remove(file)
-                continue
-            img = draw_boxes(words, img, classes,file)
+        if label_folder:
+            possible_label_file = os.path.join(
+                label_folder,  os.path.splitext(file)[0] + ".txt")
+        else:
+            possible_label_file = None
+        img = cv2.imread(os.path.join(image_folder, file))
+        if img is None:
+            image_files.remove(file)
+            continue
+        if possible_label_file:
+            if os.path.exists(possible_label_file):
+                words = read_label_file(possible_label_file)
+                if not words:
+                    continue
+                
+                img = draw_boxes(words, img, classes,file)
         try:
             cv2.imshow(window_description, img)
         except Exception as E:
+            print(str(E))
             for char in file:
                 print(char, ord(char))
         if cv2.getWindowProperty(window_description, cv2.WND_PROP_VISIBLE) <1:
@@ -322,7 +333,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     labels = args.label_folder
     images = args.image_folder
-
+    
     path = Path(os.path.abspath(images))
     parent_path = path.parent.absolute()
     valid_path = os.path.join(parent_path, "valid")
@@ -364,20 +375,26 @@ if __name__ == "__main__":
             else:
                 exit()
         os.makedirs(deleted_path)
-
-    if not os.path.exists(os.path.join(labels, "classes.txt")):
-        print("> No classes.txt file, i searching for predefined.txt in app folder...")
+    if labels:
+        if not os.path.exists(os.path.join(labels, "classes.txt")):
+            print("> No classes.txt file, i searching for predefined.txt in app folder...")
+            predefined_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "predefined.txt")
+            if os.path.exists(predefined_path):
+                print("> predefined.txt file found, i will use it.")
+                classes = process_classes_file(predefined_path)
+            else:
+                classes = None
+        else:
+            print("> classes.txt file found, i will use it.")
+            classes = process_classes_file(os.path.join(labels, "classes.txt"))
+    else:
         predefined_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "predefined.txt")
         if os.path.exists(predefined_path):
-            print("> predefined.txt file found, i will use it.")
-            classes = process_classes_file(predefined_path)
+                print("> predefined.txt file found, i will use it.")
+                classes = process_classes_file(predefined_path)
         else:
             classes = None
-    else:
-        print("> classes.txt file found, i will use it.")
-        classes = process_classes_file(os.path.join(labels, "classes.txt"))
-    
-    
+
     
     
     
