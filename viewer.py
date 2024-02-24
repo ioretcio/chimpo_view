@@ -345,35 +345,12 @@ if __name__ == "__main__":
     
     
     if not os.path.exists(valid_path):
-        user_permission = input("Allow to create 4 new folders (for valid, alt_valid, empty and deleted images) (Y/N)?")
-        if user_permission.lower() in ['y', 'yes']:
-            user_permitted = True
-        else:
-            exit()
         os.makedirs(valid_path)
     if not os.path.exists(empty_path):
-        if not user_permitted:
-            user_permission = input("Allow to create 4 new folders (for valid, alt_valid, empty and deleted images) (Y/N)?")
-            if user_permission.lower() in ['y', 'yes']:
-                user_permitted = True
-            else:
-                exit()
         os.makedirs(empty_path)
     if not os.path.exists(alt_valid_path):
-        if not user_permitted:
-            user_permission = input("Allow to create 4 new folders (for valid, alt_valid, empty and deleted images) (Y/N)?")
-            if user_permission.lower() in ['y', 'yes']:
-                user_permitted = True
-            else:
-                exit()
         os.makedirs(alt_valid_path)
     if not os.path.exists(deleted_path):
-        if not user_permitted:
-            user_permission = input("Allow to create 4 new folders (for valid, alt_valid, empty and deleted images) (Y/N)?")
-            if user_permission.lower() in ['y', 'yes']:
-                user_permitted = True
-            else:
-                exit()
         os.makedirs(deleted_path)
     if labels:
         if not os.path.exists(os.path.join(labels, "classes.txt")):
